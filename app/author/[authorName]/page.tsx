@@ -6,9 +6,9 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     authorName: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

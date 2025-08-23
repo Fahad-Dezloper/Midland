@@ -1,10 +1,11 @@
 "use client"
 import { AddToCart } from 'components/cart/add-to-cart';
+import { Product } from 'lib/shopify/types';
 import { Minus, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
-const BuyNowSection = ({product}) => {
+const BuyNowSection = ({product}: {product: Product}) => {
     const [quantity, setQuantity] = useState(1)
 
   const handleQuantityChange = (newQuantity: number) => {

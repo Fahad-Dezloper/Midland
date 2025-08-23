@@ -93,11 +93,13 @@ function createOrUpdateCartItem(
       id: variant.id,
       title: variant.title,
       selectedOptions: variant.selectedOptions,
+      priceRange: product.priceRange,
       product: {
         id: product.id,
         handle: product.handle,
         title: product.title,
-        featuredImage: product.featuredImage
+        featuredImage: product.featuredImage,
+        priceRange: product.priceRange
       }
     }
   };
