@@ -7,6 +7,10 @@
 @plugin "@tailwindcss/container-queries";
 @plugin "@tailwindcss/typography";
 
+body::-webkit-scrollbar {
+  display: none;
+}
+
 @layer base {
   *,
   ::after,

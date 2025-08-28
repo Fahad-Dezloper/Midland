@@ -42,7 +42,7 @@ export default async function RootLayout({
           <Navbar />
           <main className='md:px-24 px-4'>
             {children}
-            <Toaster closeButton />
+            <Toaster />
             <WelcomeToast />
           </main>
           <Footer />

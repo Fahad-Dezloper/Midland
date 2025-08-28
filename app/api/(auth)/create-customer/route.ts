@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
-  const { email, firstName, lastName } = await req.json();
+  const { email, fullName, phone, password } = await req.json();
 
   const adminApiKey = process.env.SHOPIFY_ADMIN_API_KEY;
   const storeDomain = 'navbar-dezloper.myshopify.com';
@@ -16,8 +16,14 @@ export async function POST(req: NextRequest) {
         }
         customer {
           id
+          email
+          phone 
           firstName
-          lastName
+          smsMarketingConsent {
+            marketingState
+            marketingOptInLevel
+            consentUpdatedAt
+          }
         }
       }
     }
@@ -48,7 +54,15 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         query: createCustomerMutation,
         variables: {
-          input: { email, firstName, lastName },
+          input: { 
+            email, 
+            phone, 
+            firstName: fullName, 
+            smsMarketingConsent: {
+              marketingState: "SUBSCRIBED",
+              marketingOptInLevel: "SINGLE_OPT_IN"
+            } 
+          },
         },
       }),
     });
@@ -57,7 +71,13 @@ export async function POST(req: NextRequest) {
 
     const userErrors = createData?.data?.customerCreate?.userErrors;
     if (createData.errors || (userErrors && userErrors.length > 0)) {
-      return NextResponse.json({ error: createData.errors || userErrors }, { status: 400 });
+      console.error('create-customer: GraphQL errors', createData.errors || userErrors);
+      const message = Array.isArray(createData.errors)
+        ? createData.errors.map((e: any) => e.message).join(', ')
+        : Array.isArray(userErrors)
+        ? userErrors.map((e: any) => e.message).join(', ')
+        : 'Failed to create customer';
+      return NextResponse.json({ error: message, details: createData.errors || userErrors }, { status: 400 });
     }
 
     const customerId = createData.data.customerCreate.customer.id;
@@ -82,7 +102,13 @@ export async function POST(req: NextRequest) {
 
     const inviteErrors = inviteData?.data?.customerSendAccountInviteEmail?.userErrors;
     if (inviteData.errors || (inviteErrors && inviteErrors.length > 0)) {
-      return NextResponse.json({ error: inviteData.errors || inviteErrors }, { status: 400 });
+      console.error('create-customer: Invite errors', inviteData.errors || inviteErrors);
+      const message = Array.isArray(inviteData.errors)
+        ? inviteData.errors.map((e: any) => e.message).join(', ')
+        : Array.isArray(inviteErrors)
+        ? inviteErrors.map((e: any) => e.message).join(', ')
+        : 'Failed to send invite email';
+      return NextResponse.json({ error: message, details: inviteData.errors || inviteErrors }, { status: 400 });
     }
 
     return NextResponse.json({
@@ -90,6 +116,7 @@ export async function POST(req: NextRequest) {
       inviteSent: true,
     });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : error }, { status: 500 });
+    console.error('create-customer: Unexpected error', error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
