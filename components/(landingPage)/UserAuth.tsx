@@ -1,6 +1,7 @@
 "use client"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Google, Meta } from '@lobehub/icons';
+import UserIcon from "components/icons/userIcon";
 import Image from "next/image";
 import { useState } from "react";
 import { toast } from 'sonner';
@@ -84,19 +85,18 @@ const UserAuth = () => {
     <Dialog open={open} onOpenChange={setOpen}>
       {loggedIn ? (
         <button
-          className="text-gray-700 hover:text-primary text-sm font-medium"
+          className="w-fit h-fit bg-red-400"
           onClick={handleLogout}
-          type="button"
         >
-          Logout
+        <UserIcon />
         </button>
       ) : (
-        <DialogTrigger className="text-gray-700 hover:text-primary text-sm font-medium">Login</DialogTrigger>
+        <DialogTrigger className="text-gray-700 hover:text-primary text-sm font-medium"><UserIcon /></DialogTrigger>
       )}
       <DialogContent className="sm:max-w-3xl">
-          <div className="text-3xl text-black font-semibold tracking-tight mb-2"> 
-              {mode === 'login' ? 'Log in' : 'Sign Up'}
-            </div>
+        <div className="text-3xl text-black font-semibold tracking-tight mb-2"> 
+          {mode === 'login' ? 'Log in' : 'Sign Up'}
+        </div>
         <div className="grid grid-cols-1 font-primary md:grid-cols-2 gap-8 items-center">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {mode === 'login' ? (

@@ -62,7 +62,7 @@ export async function Navbar() {
           </div>
 
           {/* Right Navigation - Hidden on mobile, visible on md+ */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center gap-4">
             <Link href="/pre-order" className="text-gray-700 hover:text-primary text-sm font-medium">
               Pre-order
             </Link>
@@ -72,8 +72,10 @@ export async function Navbar() {
             <Link href="/wishlist" className="text-gray-700 hover:text-primary text-sm font-medium">
               Wishlist
             </Link>
+            <div className='flex gap-0'>
            <UserAuth />
             <CartModal />
+            </div>
           </div>
         </div>
       </nav>
@@ -134,19 +136,6 @@ export async function Navbar() {
             </a>
           </div>
         </div>
-        
-        {/* Mobile Social Media Icons */}
-        {/* <div className="flex md:hidden items-center justify-center space-x-6 pb-3 border-t border-gray-100 mt-2 pt-3">
-          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-blue-500 transition-colors">
-            <TwitterIconn />
-          </a>
-          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-primary transition-colors">
-            <FacebookIconn />
-          </a>
-          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-pink-600 transition-colors">
-            <InstagramIconn />
-          </a>
-        </div> */}
       </nav>
     </header>
   );
