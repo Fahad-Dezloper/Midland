@@ -35,8 +35,6 @@ export default function CartModal() {
     }
   }, [cart]);
 
-  console.log("cart here", cart);
-
   // Removed auto-open on quantity change to avoid opening the cart after add
 
   return (

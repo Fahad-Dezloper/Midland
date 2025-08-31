@@ -2,6 +2,7 @@ import { CartProvider } from 'components/cart/cart-context';
 import Footer from 'components/layout/footer';
 import { Navbar } from 'components/layout/navbar';
 import { WelcomeToast } from 'components/welcome-toast';
+import { AuthProvider } from 'contexts/AuthContext';
 import { getCart } from 'lib/shopify';
 import { baseUrl } from 'lib/utils';
 import { Josefin_Sans, Roboto } from 'next/font/google';
@@ -38,15 +39,17 @@ export default async function RootLayout({
   return (
     <html lang="en" className={josefinsans.variable} suppressHydrationWarning>
       <body suppressHydrationWarning className={`${roboto.variable} antialiased !overflow-x-hidden w-full text-black selection:bg-teal-300 dark:bg-neutral-900 dark:text-white dark:selection:bg-pink-500 dark:selection:text-white`}>
-        <CartProvider cartPromise={cart}>
-          <Navbar />
-          <main className='md:px-24 px-4'>
-            {children}
-            <Toaster />
-            <WelcomeToast />
-          </main>
-          <Footer />
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider cartPromise={cart}>
+            <Navbar />
+            <main className='md:px-24 px-4'>
+              {children}
+              <Toaster />
+              <WelcomeToast />
+            </main>
+            <Footer />
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );

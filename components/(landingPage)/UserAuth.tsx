@@ -1,12 +1,21 @@
 "use client"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Google, Meta } from '@lobehub/icons';
 import UserIcon from "components/icons/userIcon";
+import { useAuth } from 'contexts/AuthContext';
 import Image from "next/image";
 import { useState } from "react";
 import { toast } from 'sonner';
 
 const UserAuth = () => {
+  const { customer, isAuthenticated, login, logout, isLoading } = useAuth();
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({
@@ -18,7 +27,6 @@ const UserAuth = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [loggedIn, setLoggedIn] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -43,11 +51,21 @@ const UserAuth = () => {
             password: form.password,
           }),
         })
-        if (!res.ok) throw new Error('Login failed')
-        setSuccess('Logged in successfully')
-        toast.success('Logged in successfully')
-        setLoggedIn(true);
-        setOpen(false)
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Login failed');
+        }
+        
+        const data = await res.json();
+        await login(data.token);
+        setOpen(false);
+        setForm({
+          email: '',
+          password: '',
+          fullName: '',
+          phone: '',
+        });
       } else {
         const res = await fetch('/api/create-customer', {
           method: 'POST',
@@ -59,10 +77,15 @@ const UserAuth = () => {
             password: form.password,
           }),
         })
-        if (!res.ok) throw new Error('Signup failed')
-        setSuccess('Account created successfully')
-        toast.success('Account created successfully')
-        setLoggedIn(true);
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Signup failed');
+        }
+        
+        const data = await res.json();
+        setSuccess('Account created successfully! Please check your email to set your password.')
+        toast.success('Account created successfully! Please check your email to set your password.')
         setOpen(false)
       }
     } catch (err: any) {
@@ -74,22 +97,54 @@ const UserAuth = () => {
 
   // DialogTrigger logic
   const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('customer_token');
-      document.cookie = 'customer_token=; path=/; max-age=0';
-      setLoggedIn(false);
-    }
+    logout();
   };
+
+  const handleProfile = () => {
+    // Navigate to profile page or open profile modal
+    console.log('Navigate to profile');
+    toast.info('Profile feature coming soon');
+  };
+
+  if (isLoading) {
+    return (
+      <div className="w-fit h-fit">
+        <UserIcon />
+      </div>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {loggedIn ? (
-        <button
-          className="w-fit h-fit bg-red-400"
-          onClick={handleLogout}
-        >
-        <UserIcon />
-        </button>
+      {customer ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="w-fit h-fit hover:opacity-80 transition-opacity">
+              <UserIcon />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={handleProfile} className="cursor-pointer">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 flex items-center justify-center">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                Profile
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Logout
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ) : (
         <DialogTrigger className="text-gray-700 hover:text-primary text-sm font-medium"><UserIcon /></DialogTrigger>
       )}

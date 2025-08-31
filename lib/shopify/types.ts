@@ -424,3 +424,28 @@ export type ShopifyEventsOperation = {
     };
   };
 };
+
+export type Customer = {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  acceptsMarketing: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CustomerAccessToken = {
+  accessToken: string;
+  expiresAt: string;
+};
+
+export type ShopifyCustomerOperation = {
+  data: {
+    customer: Customer | null;
+  };
+  variables: {
+    token: string;
+  };
+};

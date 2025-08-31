@@ -26,6 +26,7 @@ import {
   getCollectionQuery,
   getCollectionsQuery
 } from './queries/collection';
+import { GET_CUSTOMER } from './queries/customer';
 import { getEventsQuery, getPastEventsQuery } from './queries/events';
 import { getMenuQuery } from './queries/menu';
 import { getPageQuery, getPagesQuery } from './queries/page';
@@ -41,6 +42,7 @@ import {
   Cart,
   Collection,
   Connection,
+  Customer,
   EventDets,
   Image,
   Menu,
@@ -56,6 +58,7 @@ import {
   ShopifyCollectionProductsOperation,
   ShopifyCollectionsOperation,
   ShopifyCreateCartOperation,
+  ShopifyCustomerOperation,
   ShopifyEventsOperation,
   ShopifyMenuOperation,
   ShopifyPageOperation,
@@ -746,6 +749,22 @@ export async function getBlogs(): Promise<any> {
   // @ts-ignore:i know it is not defined
   const articles = res?.body?.articles;
   return articles;
+}
+
+export async function validateCustomerToken(token: string): Promise<Customer | null> {
+  try {
+    const res = await shopifyFetch<ShopifyCustomerOperation>({
+      query: GET_CUSTOMER,
+      variables: { token },
+    });
+
+    console.log("reacher here for validation", res.body.data.customer)
+
+    return res.body.data.customer;
+  } catch (error) {
+    console.error('Error validating customer token:', error);
+    return null;
+  }
 }
 
 
