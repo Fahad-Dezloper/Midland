@@ -11,6 +11,7 @@ import { Google, Meta } from '@lobehub/icons';
 import UserIcon from "components/icons/userIcon";
 import { useAuth } from 'contexts/AuthContext';
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from 'sonner';
 
@@ -101,9 +102,7 @@ const UserAuth = () => {
   };
 
   const handleProfile = () => {
-    // Navigate to profile page or open profile modal
-    console.log('Navigate to profile');
-    toast.info('Profile feature coming soon');
+    window.location.href = '/profile';
   };
 
   if (isLoading) {
@@ -124,7 +123,8 @@ const UserAuth = () => {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={handleProfile} className="cursor-pointer">
+            <Link href="/profile" >
+            <DropdownMenuItem className="cursor-pointer"> 
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 flex items-center justify-center">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -134,6 +134,7 @@ const UserAuth = () => {
                 Profile
               </div>
             </DropdownMenuItem>
+            </Link>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600">
               <div className="flex items-center gap-2">

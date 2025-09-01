@@ -441,11 +441,110 @@ export type CustomerAccessToken = {
   expiresAt: string;
 };
 
+export type CustomerOrder = {
+  id: string;
+  name: string;
+  orderNumber: number;
+  processedAt: string;
+  fulfillmentStatus: string;
+  financialStatus: string;
+  totalPriceV2: {
+    amount: string;
+    currencyCode: string;
+  };
+  lineItems: {
+    edges: Array<{
+      node: {
+        title: string;
+        quantity: number;
+        variant: {
+          id: string;
+          title: string;
+          price: {
+            amount: string;
+            currencyCode: string;
+          };
+          image: {
+            url: string;
+            altText: string | null;
+            width: number;
+            height: number;
+          } | null;
+        };
+      };
+    }>;
+  };
+  trackingData?: OrderTracking | null;
+};
+
+export type CustomerWithOrders = Customer & {
+  orders: {
+    edges: Array<{
+      node: CustomerOrder;
+    }>;
+  };
+};
+
+export type ShopifyCustomerOrdersOperation = {
+  data: {
+    customer: CustomerWithOrders | null;
+  };
+  variables: {
+    token: string;
+    first: number;
+  };
+};
+
 export type ShopifyCustomerOperation = {
   data: {
     customer: Customer | null;
   };
   variables: {
     token: string;
+  };
+};
+
+export type TrackingInfo = {
+  company: string;
+  number: string;
+  url: string;
+};
+
+export type FulfillmentLineItem = {
+  id: string;
+  quantity: number;
+  lineItem: {
+    title: string;
+  };
+};
+
+export type Fulfillment = {
+  id: string;
+  status: string;
+  createdAt: string;
+  deliveredAt: string | null;
+  estimatedDeliveryAt: string | null;
+  inTransitAt: string | null;
+  displayStatus: string;
+  trackingInfo: TrackingInfo[];
+  fulfillmentLineItems: {
+    edges: Array<{
+      node: FulfillmentLineItem;
+    }>;
+  };
+};
+
+export type OrderTracking = {
+  id: string;
+  name: string;
+  fulfillments: Fulfillment[];
+};
+
+export type ShopifyOrderTrackingOperation = {
+  data: {
+    order: OrderTracking | null;
+  };
+  variables: {
+    id: string;
   };
 };

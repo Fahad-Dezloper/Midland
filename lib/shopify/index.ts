@@ -26,7 +26,7 @@ import {
   getCollectionQuery,
   getCollectionsQuery
 } from './queries/collection';
-import { GET_CUSTOMER } from './queries/customer';
+import { GET_CUSTOMER, GET_CUSTOMER_ORDERS, GET_ORDER_TRACKING } from './queries/customer';
 import { getEventsQuery, getPastEventsQuery } from './queries/events';
 import { getMenuQuery } from './queries/menu';
 import { getPageQuery, getPagesQuery } from './queries/page';
@@ -43,9 +43,11 @@ import {
   Collection,
   Connection,
   Customer,
+  CustomerWithOrders,
   EventDets,
   Image,
   Menu,
+  OrderTracking,
   Page,
   PastEventDets,
   Product,
@@ -59,6 +61,7 @@ import {
   ShopifyCollectionsOperation,
   ShopifyCreateCartOperation,
   ShopifyCustomerOperation,
+  ShopifyCustomerOrdersOperation,
   ShopifyEventsOperation,
   ShopifyMenuOperation,
   ShopifyPageOperation,
@@ -758,11 +761,168 @@ export async function validateCustomerToken(token: string): Promise<Customer | n
       variables: { token },
     });
 
-    console.log("reacher here for validation", res.body.data.customer)
 
     return res.body.data.customer;
   } catch (error) {
     console.error('Error validating customer token:', error);
+    return null;
+  }
+}
+
+export async function getCustomerOrders(token: string, first: number = 10): Promise<CustomerWithOrders | null> {
+  try {
+    const res = await shopifyFetch<ShopifyCustomerOrdersOperation>({
+      query: GET_CUSTOMER_ORDERS,
+      variables: { token, first },
+    });
+
+    console.log("here are customer orders", res.body.data.customer?.orders.edges);
+    
+    // Fetch tracking data for each order
+    if (res.body.data.customer?.orders?.edges) {
+      const ordersWithTracking = await Promise.all(
+        res.body.data.customer.orders.edges.map(async (edge) => {
+          const order = edge.node;
+          try {
+            const trackingData = await getOrderTracking(order.id);
+            return {
+              ...order,
+              trackingData
+            };
+          } catch (error) {
+            console.error(`Error fetching tracking for order ${order.id}:`, error);
+            return {
+              ...order,
+              trackingData: null
+            };
+          }
+        })
+      );
+
+      // Update the customer data with orders that include tracking
+      return {
+        ...res.body.data.customer,
+        orders: {
+          ...res.body.data.customer.orders,
+          edges: ordersWithTracking.map(order => ({ node: order }))
+        }
+      };
+    }
+
+    return res.body.data.customer;
+  } catch (error) {
+    console.error('Error fetching customer orders:', error);
+    return null;
+  }
+}
+
+export async function getOrderTracking(orderId: string): Promise<OrderTracking | null> {
+  try {
+    console.log("=== ORDER TRACKING DEBUG ===");
+    console.log("1. Received orderId:", orderId);
+    console.log("2. Type of orderId:", typeof orderId);
+    
+    const adminKey = process.env.SHOPIFY_ADMIN_API_KEY;
+    const storeDomain = process.env.SHOPIFY_STORE_DOMAINN;
+    
+    console.log("3. Admin Key exists:", !!adminKey);
+    console.log("4. Store Domain:", storeDomain);
+    
+    if (!adminKey || !storeDomain) {
+      console.error('Missing Shopify Admin API credentials');
+      return null;
+    }
+
+    // Test Admin API access first
+    console.log("=== TESTING ADMIN API ACCESS ===");
+    const testEndpoint = `https://${storeDomain}/admin/api/2025-07/shop.json`;
+    try {
+      const testRes = await fetch(testEndpoint, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-Access-Token': adminKey,
+        },
+      });
+      console.log("Admin API test response:", testRes.status, testRes.ok);
+      if (testRes.ok) {
+        const testData = await testRes.json();
+        console.log("Shop info:", testData.shop?.name);
+      }
+    } catch (testError) {
+      console.error("Admin API test failed:", testError);
+    }
+
+    // Extract numeric ID from Shopify GID format
+    // GID format: gid://shopify/Order/123456789
+    let numericOrderId = orderId;
+    console.log("5. Initial numericOrderId:", numericOrderId);
+    
+    if (orderId.includes('/shopify/Order/')) {
+      console.log("6. Found '/shopify/Order/' in orderId");
+      const parts = orderId.split('/shopify/Order/');
+      console.log("7. Split parts:", parts);
+      console.log("8. Parts length:", parts.length);
+      
+      if (parts.length > 1 && parts[1]) {
+        numericOrderId = parts[1];
+        console.log("9. Extracted numericOrderId:", numericOrderId);
+        
+        // Remove any query parameters
+        if (numericOrderId.includes('?')) {
+          console.log("10. Found '?' in numericOrderId");
+          const queryParts = numericOrderId.split('?');
+          console.log("11. Query parts:", queryParts);
+          if (queryParts[0]) {
+            numericOrderId = queryParts[0];
+            console.log("12. Final numericOrderId after removing query:", numericOrderId);
+          }
+        }
+      } else {
+        console.log("9. Parts length <= 1 or parts[1] is falsy");
+      }
+    } else {
+      console.log("6. No '/shopify/Order/' found in orderId");
+    }
+
+    console.log("13. Final numericOrderId:", numericOrderId);
+    console.log("14. Constructed GID:", `gid://shopify/Order/${numericOrderId}`);
+
+    const endpoint = `https://${storeDomain}/admin/api/2025-07/graphql.json`;
+    console.log("15. Endpoint:", endpoint);
+
+    const requestBody = {
+      query: GET_ORDER_TRACKING,
+      variables: { id: `gid://shopify/Order/${numericOrderId}` },
+    };
+    console.log("16. Request body:", JSON.stringify(requestBody, null, 2));
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': adminKey,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    console.log("res", res);
+
+    console.log("17. Response status:", res.status);
+    console.log("18. Response ok:", res.ok);
+
+    const data = await res.json();
+    console.log("19. Response data:", JSON.stringify(data, null, 2));
+    
+    if (data.errors) {
+      console.error('20. GraphQL errors:', data.errors);
+      return null;
+    }
+
+    console.log("21. Success! Returning order data");
+    return data.data.order;
+  } catch (error) {
+    console.error('22. Error in getOrderTracking:', error);
     return null;
   }
 }
